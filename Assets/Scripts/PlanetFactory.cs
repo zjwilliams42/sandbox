@@ -21,20 +21,24 @@ public class PlanetFactory : MonoBehaviour
      * @param "subdivide" this is how many time we subdivide the original shape.
      * @param "type" decided the original shape we are subdividing, default is 0. (0 = cube, 1, = icosohedron)
      */
-    static public Planet GeneratePlanet(Material material, int subdivide, int type = 0)
+    static public GameObject GeneratePlanet(Material material, int subdivide, int type = 0)
     {
         if (type == 0)
         {
             Primitive cube = InitAsCube();
             cube.m_Material = material;
             cube = SubdivideSquare(cube, subdivide);
-            return GenerateMeshSquare(cube);
+            LibNoise.Generator.Perlin perlin = new LibNoise.Generator.Perlin();
+            perlin.Seed = Random.Range(0, 999999);
+            return GenerateMeshSquare(cube, perlin);
         }
         else if (type == 1)
         {
             Primitive icosohedron = InitAsIcosohedron();
             icosohedron.m_Material = material;
             icosohedron = SubdivideTriangle(icosohedron, subdivide);
+            LibNoise.Generator.Perlin perlin = new LibNoise.Generator.Perlin();
+            perlin.Seed = Random.Range(0,999999);
             return GenerateMeshTriangle(icosohedron);
         }
         else
@@ -209,7 +213,7 @@ public class PlanetFactory : MonoBehaviour
         return ret;
     }
 
-    private static Planet GenerateMeshTriangle(Primitive icosohedron)
+    private static GameObject GenerateMeshTriangle(Primitive icosohedron)
     {
         GameObject m_PlanetMesh = new GameObject("Planet Mesh");
 
@@ -257,10 +261,11 @@ public class PlanetFactory : MonoBehaviour
         MeshFilter terrainFilter = m_PlanetMesh.AddComponent<MeshFilter>();
         terrainFilter.mesh = terrainMesh;
 
-        return new Planet(m_PlanetMesh, icosohedron.m_Polygons);
+        //return new Planet(m_PlanetMesh, icosohedron.m_Polygons);
+        return m_PlanetMesh;
     }
 
-    private static Planet GenerateMeshSquare(Primitive cube)
+    private static GameObject GenerateMeshSquare(Primitive cube, LibNoise.Generator.Perlin perlin)
     {
         GameObject m_PlanetMesh = new GameObject("Planet Mesh");
 
@@ -277,8 +282,9 @@ public class PlanetFactory : MonoBehaviour
         Vector3[] normals = new Vector3[vertexCount];
         Color32[] colors = new Color32[vertexCount];
 
-        Color32 green = new Color32(20, 255, 30, 255);
-        Color32 brown = new Color32(220, 150, 70, 255);
+        Color32 grass = new Color32(20, 255, 30, 255);
+        Color32 water = new Color32(64, 164, 223, 255);
+        Color32 sand = new Color32(194, 178, 128, 255);
 
         for (int i = 0; i < cube.m_Polygons.Count; i++)
         {
@@ -297,10 +303,26 @@ public class PlanetFactory : MonoBehaviour
             vertices[i * 6 + 2] = cube.m_Vertices[poly.m_Vertices[2]];
             vertices[i * 6 + 3] = cube.m_Vertices[poly.m_Vertices[3]];
 
-            // Here's where we assign each polygon a random color.
-            Color32 polyColor = Color32.Lerp(green, brown, Random.Range(0.0f, 1.0f));
+            double value = Mathf.Abs((float)perlin.GetValue(vertices[i * 6 + 0].x, vertices[i * 6 + 0].y, vertices[i * 6 + 0].z));
 
-            colors[i * 6 + 0] = polyColor;
+            // Here's where we assign each polygon a random color.
+            //Color32 polyColor = Color32.Lerp(green, brown, Random.Range(0.0f, 1.0f));
+            Color32 polyColor = (value >= 0.5) ? grass : water;
+
+            if (value <= 0.5)
+            {
+                polyColor = water;
+            }
+            else if (value <= 0.55)
+            {
+                polyColor = sand;
+            }
+            else
+            {
+                polyColor = grass;
+            }
+
+                colors[i * 6 + 0] = polyColor;
             colors[i * 6 + 1] = polyColor;
             colors[i * 6 + 2] = polyColor;
 
@@ -319,7 +341,8 @@ public class PlanetFactory : MonoBehaviour
         terrainFilter.mesh = terrainMesh;
         terrainFilter.mesh.RecalculateNormals();
 
-        return new Planet(m_PlanetMesh, cube.m_Polygons);
+        //return new Planet(m_PlanetMesh, cube.m_Polygons);
+        return m_PlanetMesh;
     }
 
     /***

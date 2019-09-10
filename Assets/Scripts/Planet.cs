@@ -6,11 +6,21 @@ public class Planet : MonoBehaviour
 {
     public GameObject m_PlanetMesh;
     public List<Polygon> m_Polygons;
+    public float p_Rotation;
+    public float axis;
 
-    public Planet(GameObject i_PlanetMesh, List<Polygon> i_Polygons)
+    public void Start()
     {
-        m_PlanetMesh = i_PlanetMesh;
-        m_Polygons = i_Polygons;
+        m_PlanetMesh = this.gameObject;
+        //m_Polygons = i_Polygons;
+        p_Rotation = 10f;
+        axis = -10f;
+        m_PlanetMesh.transform.rotation = Quaternion.Euler(0, 0, axis);
+    }
+
+    public void Update()
+    {
+        m_PlanetMesh.transform.Rotate(Vector3.up * p_Rotation * Time.deltaTime, Space.Self);
     }
 
     public void setColor(int index, Color32 color)
