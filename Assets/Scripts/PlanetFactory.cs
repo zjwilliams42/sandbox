@@ -30,16 +30,20 @@ public class PlanetFactory : MonoBehaviour
             cube = SubdivideSquare(cube, subdivide);
             LibNoise.Generator.Perlin perlin = new LibNoise.Generator.Perlin();
             perlin.Seed = Random.Range(0, 999999);
-            return GenerateMeshSquare(cube, perlin);
+            GameObject planet = GenerateMeshSquare(cube, perlin);
+            planet.AddComponent<MeshCollider>();
+            return planet;
         }
         else if (type == 1)
         {
-            Primitive icosohedron = InitAsIcosohedron();
-            icosohedron.m_Material = material;
-            icosohedron = SubdivideTriangle(icosohedron, subdivide);
+            Primitive icsosohedron = InitAsIcosohedron();
+            icsosohedron.m_Material = material;
+            icsosohedron = SubdivideTriangle(icsosohedron, subdivide);
             LibNoise.Generator.Perlin perlin = new LibNoise.Generator.Perlin();
             perlin.Seed = Random.Range(0,999999);
-            return GenerateMeshTriangle(icosohedron);
+            GameObject planet = GenerateMeshTriangle(icsosohedron);
+            planet.AddComponent<SphereCollider>();
+            return planet;
         }
         else
         { return null; }
