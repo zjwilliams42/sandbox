@@ -13,125 +13,113 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-/***
-* This is the class that will be each individual polygon
-* of our planet. The tutorial has this as a triangle, ours
-* is a square.
-*/
-public class Polygon
-{
-    public List<int> m_Vertices;
-
-    public Polygon(int a, int b, int c, int d)
-    {
-        m_Vertices = new List<int>() { a, b, c, d};
-    }
-
-    public Polygon(int a, int b, int c)
-    {
-        m_Vertices = new List<int>() { a, b, c };
-    }
-}
-
-public class Planet
-{
-    public GameObject m_PlanetMesh;
-    public List<Polygon> m_Polygons;
-
-    public Planet(GameObject i_PlanetMesh, List<Polygon> i_Polygons)
-    {
-        m_PlanetMesh = i_PlanetMesh;
-        m_Polygons = i_Polygons;
-    }
-
-    public void setColor(int index, Color32 color)
-    {
-        Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
-        Color32[] colors = m_Mesh.colors32;
-
-        colors[index * 6 + 0] = color;
-        colors[index * 6 + 1] = color;
-        colors[index * 6 + 2] = color;
-
-        colors[index * 6 + 3] = color;
-        colors[index * 6 + 4] = color;
-        colors[index * 6 + 5] = color;
-
-        m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
-    }
-
-    public void draw()
-    {
-        int vertexCount = m_Polygons.Count * 6;
-
-        int[] indices = new int[vertexCount];
-
-        Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
-        Color32[] colors = m_Mesh.colors32;
-
-        Color32 polyColor = new Color32(0, 255, 255, 255);
-
-        for (int i = 0; i < m_Polygons.Count; i++)
-        {
-
-            colors[i * 6 + 0] = polyColor;
-            colors[i * 6 + 1] = polyColor;
-            colors[i * 6 + 2] = polyColor;
-
-            colors[i * 6 + 3] = polyColor;
-            colors[i * 6 + 4] = polyColor;
-            colors[i * 6 + 5] = polyColor;
-        }
-
-        m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
-    }
-}
-
 public class PlanetFactory : MonoBehaviour
 {
-
-    public List<Polygon> m_Polygons;
-    public List<Vector3> m_Vertices;
-    public GameObject m_PlanetMesh;
-    public Material m_Material;
-    public int m_Subdivide;
-
-    public Planet m_Planet;
-
-    // Start is called before the first frame update
-    void Start()
+    /***
+     * This function generates and return a Planet object.
+     * 
+     * @param "subdivide" this is how many time we subdivide the original shape.
+     * @param "type" decided the original shape we are subdividing, default is 0. (0 = cube, 1, = icosohedron)
+     */
+    static public Planet GeneratePlanet(Material material, int subdivide, int type = 0)
     {
-        //InitAsIcosohedron();
-        //SubdivideTriangle(m_Subdivide);
-        //GenerateMeshTriangle();
-
-        InitAsCube();
-        SubdivideSquare(m_Subdivide);
-        GenerateMeshSquare();
-
-        m_Planet = new Planet(m_PlanetMesh, m_Polygons);
-        m_Planet.draw();
-    }
-
-    // Update is called once per frame
-    public int i = 0;
-    void Update()
-    {
-        if (i > 382) {
-            i = 0;
+        if (type == 0)
+        {
+            Primitive cube = InitAsCube();
+            cube.m_Material = material;
+            cube = SubdivideSquare(cube, subdivide);
+            return GenerateMeshSquare(cube);
         }
-        m_Planet.setColor(i++, new Color32(0,255,255,255));
-        m_Planet.setColor(i, new Color32(255, 0, 0, 255));
+        else if (type == 1)
+        {
+            Primitive icosohedron = InitAsIcosohedron();
+            icosohedron.m_Material = material;
+            icosohedron = SubdivideTriangle(icosohedron, subdivide);
+            return GenerateMeshTriangle(icosohedron);
+        }
+        else
+        { return null; }
     }
 
-    public void SubdivideTriangle(int recursions)
+    private static Primitive InitAsIcosohedron()
+    {
+        Primitive icosohedron = new Primitive();
+        //m_Polygons = new List<Polygon>();
+        //m_Vertices = new List<Vector3>();
+
+        float t = (1.0f + Mathf.Sqrt(5.0f)) / 2.0f;
+
+        icosohedron.m_Vertices.Add(new Vector3(-1, t, 0).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(1, t, 0).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(-1, -t, 0).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(1, -t, 0).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(0, -1, t).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(0, 1, t).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(0, -1, -t).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(0, 1, -t).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(t, 0, -1).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(t, 0, 1).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(-t, 0, -1).normalized);
+        icosohedron.m_Vertices.Add(new Vector3(-t, 0, 1).normalized);
+
+        icosohedron.m_Polygons.Add(new Polygon(0, 11, 5));
+        icosohedron.m_Polygons.Add(new Polygon(0, 5, 1));
+        icosohedron.m_Polygons.Add(new Polygon(0, 1, 7));
+        icosohedron.m_Polygons.Add(new Polygon(0, 7, 10));
+        icosohedron.m_Polygons.Add(new Polygon(0, 10, 11));
+        icosohedron.m_Polygons.Add(new Polygon(1, 5, 9));
+        icosohedron.m_Polygons.Add(new Polygon(5, 11, 4));
+        icosohedron.m_Polygons.Add(new Polygon(11, 10, 2));
+        icosohedron.m_Polygons.Add(new Polygon(10, 7, 6));
+        icosohedron.m_Polygons.Add(new Polygon(7, 1, 8));
+        icosohedron.m_Polygons.Add(new Polygon(3, 9, 4));
+        icosohedron.m_Polygons.Add(new Polygon(3, 4, 2));
+        icosohedron.m_Polygons.Add(new Polygon(3, 2, 6));
+        icosohedron.m_Polygons.Add(new Polygon(3, 6, 8));
+        icosohedron.m_Polygons.Add(new Polygon(3, 8, 9));
+        icosohedron.m_Polygons.Add(new Polygon(4, 9, 5));
+        icosohedron.m_Polygons.Add(new Polygon(2, 4, 11));
+        icosohedron.m_Polygons.Add(new Polygon(6, 2, 10));
+        icosohedron.m_Polygons.Add(new Polygon(8, 6, 7));
+        icosohedron.m_Polygons.Add(new Polygon(9, 8, 1));
+
+        return icosohedron;
+    }
+
+    private static Primitive InitAsCube()
+    {
+        //m_Polygons = new List<Polygon>();
+        //m_Vertices = new List<Vector3>();
+        Primitive cube = new Primitive();
+
+        cube.m_Vertices.Add(new Vector3(-0.5f, -0.5f, -0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(0.5f, -0.5f, -0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(0.5f, 0.5f, -0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(-0.5f, 0.5f, -0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(-0.5f, -0.5f, 0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(0.5f, -0.5f, 0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(0.5f, 0.5f, 0.5f).normalized);
+        cube.m_Vertices.Add(new Vector3(-0.5f, 0.5f, 0.5f).normalized);
+
+
+        cube.m_Polygons.Add(new Polygon(0, 1, 2, 3)); // front
+        cube.m_Polygons.Add(new Polygon(3, 2, 6, 7)); // top
+        cube.m_Polygons.Add(new Polygon(1, 5, 6, 2)); // right
+        cube.m_Polygons.Add(new Polygon(4, 0, 3, 7)); // left
+        cube.m_Polygons.Add(new Polygon(5, 4, 7, 6)); // back
+        cube.m_Polygons.Add(new Polygon(4, 5, 1, 0)); // bottom
+
+        return cube;
+    }
+
+    private static Primitive SubdivideTriangle(Primitive icosohedron, int recursions)
     {
         var midPointCache = new Dictionary<int, int>();
 
         for (int i = 0; i < recursions; i++)
         {
             var newPolys = new List<Polygon>();
-            foreach (var poly in m_Polygons)
+            foreach (var poly in icosohedron.m_Polygons)
             {
                 int a = poly.m_Vertices[0];
                 int b = poly.m_Vertices[1];
@@ -140,13 +128,13 @@ public class PlanetFactory : MonoBehaviour
                 // Use GetMidPointIndex to either create a
                 // new vertex between two old vertices, or
                 // find the one that was already created.
-                int ab = GetMidPointIndex (midPointCache, a, b);
-                int bc = GetMidPointIndex(midPointCache, b, c);
-                int ca = GetMidPointIndex(midPointCache, c, a);
+                int ab = GetMidPointIndex(midPointCache, a, b, icosohedron);
+                int bc = GetMidPointIndex(midPointCache, b, c, icosohedron);
+                int ca = GetMidPointIndex(midPointCache, c, a, icosohedron);
 
                 // Create the four new polygons using our original
                 // three vertices, and the three new midpoints.
-                newPolys.Add (new Polygon (a, ab, ca));
+                newPolys.Add(new Polygon(a, ab, ca));
                 newPolys.Add(new Polygon(b, bc, ab));
                 newPolys.Add(new Polygon(c, ca, bc));
                 newPolys.Add(new Polygon(ab, bc, ca));
@@ -154,18 +142,20 @@ public class PlanetFactory : MonoBehaviour
 
             // Replace all our old polygons with the new set of
             // subdivided ones.
-            m_Polygons = newPolys;
+            icosohedron.m_Polygons = newPolys;
         }
+
+        return icosohedron;
     }
 
-    public void SubdivideSquare(int recursions)
+    private static Primitive SubdivideSquare(Primitive cube, int recursions)
     {
         var midPointCache = new Dictionary<int, int>();
 
         for (int i = 0; i < recursions; i++)
         {
             var newPolys = new List<Polygon>();
-            foreach (var poly in m_Polygons)
+            foreach (var poly in cube.m_Polygons)
             {
                 int a = poly.m_Vertices[0];
                 int b = poly.m_Vertices[1];
@@ -175,11 +165,11 @@ public class PlanetFactory : MonoBehaviour
                 // Use GetMidPointIndex to either create a
                 // new vertex between two old vertices, or
                 // find the one that was already created.
-                int ab = GetMidPointIndex(midPointCache, a, b);
-                int bc = GetMidPointIndex(midPointCache, b, c);
-                int cd = GetMidPointIndex(midPointCache, c, d);
-                int da = GetMidPointIndex(midPointCache, d, a);
-                int abcd = GetMidPointIndex(midPointCache, ab, cd);
+                int ab = GetMidPointIndex(midPointCache, a, b, cube);
+                int bc = GetMidPointIndex(midPointCache, b, c, cube);
+                int cd = GetMidPointIndex(midPointCache, c, d, cube);
+                int da = GetMidPointIndex(midPointCache, d, a, cube);
+                int abcd = GetMidPointIndex(midPointCache, ab, cd, cube);
 
                 // Create the four new polygons using our original
                 // three vertices, and the three new midpoints.
@@ -190,129 +180,44 @@ public class PlanetFactory : MonoBehaviour
             }
             // Replace all our old polygons with the new set of
             // subdivided ones.
-            m_Polygons = newPolys;
+            cube.m_Polygons = newPolys;
         }
+
+        return cube;
     }
 
-    public int GetMidPointIndex(Dictionary<int, int> cache, int indexA, int indexB)
+    private static int GetMidPointIndex(Dictionary<int, int> cache, int indexA, int indexB, Primitive shape)
     {
-        // We create a key out of the two original indices
-        // by storing the smaller index in the upper two bytes
-        // of an integer, and the larger index in the lower two
-        // bytes. By sorting them according to whichever is smaller
-        // we ensure that this function returns the same result
-        // whether you call
-        // GetMidPointIndex(cache, 5, 9)
-        // or...
-        // GetMidPointIndex(cache, 9, 5)
         int smallerIndex = Mathf.Min(indexA, indexB);
         int greaterIndex = Mathf.Max(indexA, indexB);
         int key = (smallerIndex << 16) + greaterIndex;
 
-        // If a midpoint is already defined, just return it.
+        // if a midpoint is already defined, just return it.
         int ret;
         if (cache.TryGetValue(key, out ret))
             return ret;
 
-        // If we're here, it's because a midpoint for these two
-        // vertices hasn't been created yet. Let's do that now!
-        Vector3 p1 = m_Vertices[indexA];
-        Vector3 p2 = m_Vertices[indexB];
+        // otherwise...
+        Vector3 p1 = shape.m_Vertices[indexA];
+        Vector3 p2 = shape.m_Vertices[indexB];
         Vector3 middle = Vector3.Lerp(p1, p2, 0.5f).normalized;
 
-        ret = m_Vertices.Count;
-        m_Vertices.Add(middle);
+        ret = shape.m_Vertices.Count;
+        shape.m_Vertices.Add(middle);
 
         cache.Add(key, ret);
         return ret;
     }
 
-    public void InitAsIcosohedron()
+    private static Planet GenerateMeshTriangle(Primitive icosohedron)
     {
-        m_Polygons = new List<Polygon>();
-        m_Vertices = new List<Vector3>();
+        GameObject m_PlanetMesh = new GameObject("Planet Mesh");
 
-        // An icosahedron has 12 vertices, and
-        // since it's completely symmetrical the
-        // formula for calculating them is kind of
-        // symmetrical too:
+        Mesh terrainMesh = new Mesh();
+        MeshRenderer surfaceRenderer = m_PlanetMesh.AddComponent<MeshRenderer>();
+        surfaceRenderer.material = icosohedron.m_Material;
 
-        float t = (1.0f + Mathf.Sqrt(5.0f)) / 2.0f;
-
-        m_Vertices.Add(new Vector3(-1, t, 0).normalized);
-        m_Vertices.Add(new Vector3(1, t, 0).normalized);
-        m_Vertices.Add(new Vector3(-1, -t, 0).normalized);
-        m_Vertices.Add(new Vector3(1, -t, 0).normalized);
-        m_Vertices.Add(new Vector3(0, -1, t).normalized);
-        m_Vertices.Add(new Vector3(0, 1, t).normalized);
-        m_Vertices.Add(new Vector3(0, -1, -t).normalized);
-        m_Vertices.Add(new Vector3(0, 1, -t).normalized);
-        m_Vertices.Add(new Vector3(t, 0, -1).normalized);
-        m_Vertices.Add(new Vector3(t, 0, 1).normalized);
-        m_Vertices.Add(new Vector3(-t, 0, -1).normalized);
-        m_Vertices.Add(new Vector3(-t, 0, 1).normalized);
-
-        // And here's the formula for the 20 sides,
-        // referencing the 12 vertices we just created.
-        m_Polygons.Add (new Polygon(0, 11, 5));
-        m_Polygons.Add(new Polygon(0, 5, 1));
-        m_Polygons.Add(new Polygon(0, 1, 7));
-        m_Polygons.Add(new Polygon(0, 7, 10));
-        m_Polygons.Add(new Polygon(0, 10, 11));
-        m_Polygons.Add(new Polygon(1, 5, 9));
-        m_Polygons.Add(new Polygon(5, 11, 4));
-        m_Polygons.Add(new Polygon(11, 10, 2));
-        m_Polygons.Add(new Polygon(10, 7, 6));
-        m_Polygons.Add(new Polygon(7, 1, 8));
-        m_Polygons.Add(new Polygon(3, 9, 4));
-        m_Polygons.Add(new Polygon(3, 4, 2));
-        m_Polygons.Add(new Polygon(3, 2, 6));
-        m_Polygons.Add(new Polygon(3, 6, 8));
-        m_Polygons.Add(new Polygon(3, 8, 9));
-        m_Polygons.Add(new Polygon(4, 9, 5));
-        m_Polygons.Add(new Polygon(2, 4, 11));
-        m_Polygons.Add(new Polygon(6, 2, 10));
-        m_Polygons.Add(new Polygon(8, 6, 7));
-        m_Polygons.Add(new Polygon(9, 8, 1));
-    }
-
-    public void InitAsCube()
-    {
-        m_Polygons = new List<Polygon>();
-        m_Vertices = new List<Vector3>();
-
-        m_Vertices.Add(new Vector3(-0.5f, -0.5f, -0.5f).normalized);
-        m_Vertices.Add(new Vector3(0.5f, -0.5f, -0.5f).normalized);
-        m_Vertices.Add(new Vector3(0.5f, 0.5f, -0.5f).normalized);
-        m_Vertices.Add(new Vector3(-0.5f, 0.5f, -0.5f).normalized);
-        m_Vertices.Add(new Vector3(-0.5f, -0.5f, 0.5f).normalized);
-        m_Vertices.Add(new Vector3(0.5f, -0.5f, 0.5f).normalized);
-        m_Vertices.Add(new Vector3(0.5f, 0.5f, 0.5f).normalized);
-        m_Vertices.Add(new Vector3(-0.5f, 0.5f, 0.5f).normalized);
-
-
-        m_Polygons.Add(new Polygon(0, 1, 2, 3)); // front
-        m_Polygons.Add(new Polygon(3, 2, 6, 7)); // top
-        m_Polygons.Add(new Polygon(1, 5, 6, 2)); // right
-        m_Polygons.Add(new Polygon(4, 0, 3, 7)); // left
-        m_Polygons.Add(new Polygon(5, 4, 7, 6)); // back
-        m_Polygons.Add(new Polygon(4, 5, 1, 0)); // bottom
-    }
-
-    public void GenerateMeshTriangle()
-    {
-        // We'll store our planet's mesh in the m_PlanetMesh
-        // variable so that we can delete the old copy when
-        // we want to generate a new one.
-        if (m_PlanetMesh)
-            Destroy(m_PlanetMesh);
-
-        m_PlanetMesh = new GameObject("Planet Mesh");
-        MeshRenderer surfaceRenderer =m_PlanetMesh.AddComponent<MeshRenderer>();
-        surfaceRenderer.material = m_Material; Mesh terrainMesh = new Mesh();
-
-        int vertexCount = m_Polygons.Count * 3;
-
+        int vertexCount = icosohedron.m_Polygons.Count * 3;
         int[] indices = new int[vertexCount];
 
         Vector3[] vertices = new Vector3[vertexCount];
@@ -321,25 +226,27 @@ public class PlanetFactory : MonoBehaviour
 
         Color32 green = new Color32(20, 255, 30, 255);
         Color32 brown = new Color32(220, 150, 70, 255);
-        for (int i = 0; i < m_Polygons.Count; i++)
+
+        for (int i = 0; i < icosohedron.m_Polygons.Count; i++)
         {
-            var poly = m_Polygons[i]; indices[i * 3 + 0] = i * 3 + 0;
+            var poly = icosohedron.m_Polygons[i];
+
+            indices[i * 3 + 0] = i * 3 + 0;
             indices[i * 3 + 1] = i * 3 + 1;
-            indices[i * 3 + 2] = i * 3 + 2; vertices[i * 3 + 0] = m_Vertices[poly.m_Vertices[0]];
-            vertices[i * 3 + 1] = m_Vertices[poly.m_Vertices[1]];
-            vertices[i * 3 + 2] = m_Vertices[poly.m_Vertices[2]];
-            
-            // Here's where we assign each polygon a random color.
-            Color32 polyColor = Color32.Lerp(green, brown, Random.Range(0.0f, 1.0f)); colors[i * 3 + 0] = polyColor;
+            indices[i * 3 + 2] = i * 3 + 2;
+
+            vertices[i * 3 + 0] = icosohedron.m_Vertices[poly.m_Vertices[0]];
+            vertices[i * 3 + 1] = icosohedron.m_Vertices[poly.m_Vertices[1]];
+            vertices[i * 3 + 2] = icosohedron.m_Vertices[poly.m_Vertices[2]];
+
+            Color32 polyColor = Color32.Lerp(green, brown, Random.Range(0.0f, 1.0f));
+            colors[i * 3 + 0] = polyColor;
             colors[i * 3 + 1] = polyColor;
             colors[i * 3 + 2] = polyColor;
 
-            // For now our planet is still perfectly spherical, so
-            // so the normal of each vertex is just like the vertex
-            // itself: pointing away from the origin.
-            normals[i * 3 + 0] = m_Vertices[poly.m_Vertices[0]];
-            normals[i * 3 + 1] = m_Vertices[poly.m_Vertices[1]];
-            normals[i * 3 + 2] = m_Vertices[poly.m_Vertices[2]];
+            normals[i * 3 + 0] = icosohedron.m_Vertices[poly.m_Vertices[0]];
+            normals[i * 3 + 1] = icosohedron.m_Vertices[poly.m_Vertices[1]];
+            normals[i * 3 + 2] = icosohedron.m_Vertices[poly.m_Vertices[2]];
         }
         terrainMesh.vertices = vertices;
         terrainMesh.normals = normals;
@@ -349,23 +256,20 @@ public class PlanetFactory : MonoBehaviour
 
         MeshFilter terrainFilter = m_PlanetMesh.AddComponent<MeshFilter>();
         terrainFilter.mesh = terrainMesh;
+
+        return new Planet(m_PlanetMesh, icosohedron.m_Polygons);
     }
 
-    public void GenerateMeshSquare()
+    private static Planet GenerateMeshSquare(Primitive cube)
     {
-        if (m_PlanetMesh)
-        {
-            Destroy(m_PlanetMesh);
-        }
-
-        m_PlanetMesh = new GameObject("Planet Mesh");
+        GameObject m_PlanetMesh = new GameObject("Planet Mesh");
 
         MeshRenderer surfaceRenderer = m_PlanetMesh.AddComponent<MeshRenderer>();
-        surfaceRenderer.material = m_Material;
+        surfaceRenderer.material = cube.m_Material;
 
         Mesh terrainMesh = new Mesh();
 
-        int vertexCount = m_Polygons.Count * 6;
+        int vertexCount = cube.m_Polygons.Count * 6;
 
         int[] indices = new int[vertexCount];
 
@@ -376,9 +280,9 @@ public class PlanetFactory : MonoBehaviour
         Color32 green = new Color32(20, 255, 30, 255);
         Color32 brown = new Color32(220, 150, 70, 255);
 
-        for (int i = 0; i < m_Polygons.Count; i++)
+        for (int i = 0; i < cube.m_Polygons.Count; i++)
         {
-            var poly = m_Polygons[i];
+            var poly = cube.m_Polygons[i];
 
             indices[i * 6 + 0] = i * 6 + 0;
             indices[i * 6 + 1] = i * 6 + 3;
@@ -388,10 +292,10 @@ public class PlanetFactory : MonoBehaviour
             indices[i * 6 + 4] = i * 6 + 3;
             indices[i * 6 + 5] = i * 6 + 2;
 
-            vertices[i * 6 + 0] = m_Vertices[poly.m_Vertices[0]];
-            vertices[i * 6 + 1] = m_Vertices[poly.m_Vertices[1]];
-            vertices[i * 6 + 2] = m_Vertices[poly.m_Vertices[2]];
-            vertices[i * 6 + 3] = m_Vertices[poly.m_Vertices[3]];
+            vertices[i * 6 + 0] = cube.m_Vertices[poly.m_Vertices[0]];
+            vertices[i * 6 + 1] = cube.m_Vertices[poly.m_Vertices[1]];
+            vertices[i * 6 + 2] = cube.m_Vertices[poly.m_Vertices[2]];
+            vertices[i * 6 + 3] = cube.m_Vertices[poly.m_Vertices[3]];
 
             // Here's where we assign each polygon a random color.
             Color32 polyColor = Color32.Lerp(green, brown, Random.Range(0.0f, 1.0f));
@@ -414,6 +318,43 @@ public class PlanetFactory : MonoBehaviour
         MeshFilter terrainFilter = m_PlanetMesh.AddComponent<MeshFilter>();
         terrainFilter.mesh = terrainMesh;
         terrainFilter.mesh.RecalculateNormals();
+
+        return new Planet(m_PlanetMesh, cube.m_Polygons);
     }
 
+    /***
+     * This simply stores our shape before being sudivided.
+     */
+    private class Primitive
+    {
+        public List<Polygon> m_Polygons;
+        public List<Vector3> m_Vertices;
+        public Material m_Material;
+
+        public Primitive()
+        {
+            m_Polygons = new List<Polygon>();
+            m_Vertices = new List<Vector3>();
+        }
+    }
+}
+
+/***
+ * This is just our class to store each polygon in.
+ * @method "Polygon(int,int,int,int)" This lets us initialize a square, simply rendered as 2 triangles.
+ * @method 'Polygon(int,int,int)" This lets us initialize a triangle.
+ */
+public class Polygon
+{
+    public List<int> m_Vertices;
+
+    public Polygon(int a, int b, int c, int d)
+    {
+        m_Vertices = new List<int>() { a, b, c, d };
+    }
+
+    public Polygon(int a, int b, int c)
+    {
+        m_Vertices = new List<int>() { a, b, c };
+    }
 }
