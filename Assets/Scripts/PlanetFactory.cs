@@ -33,6 +33,60 @@ public class Polygon
     }
 }
 
+public class Planet
+{
+    public GameObject m_PlanetMesh;
+    public List<Polygon> m_Polygons;
+
+    public Planet(GameObject i_PlanetMesh, List<Polygon> i_Polygons)
+    {
+        m_PlanetMesh = i_PlanetMesh;
+        m_Polygons = i_Polygons;
+    }
+
+    public void setColor(int index, Color32 color)
+    {
+        Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
+        Color32[] colors = m_Mesh.colors32;
+
+        colors[index * 6 + 0] = color;
+        colors[index * 6 + 1] = color;
+        colors[index * 6 + 2] = color;
+
+        colors[index * 6 + 3] = color;
+        colors[index * 6 + 4] = color;
+        colors[index * 6 + 5] = color;
+
+        m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
+    }
+
+    public void draw()
+    {
+        int vertexCount = m_Polygons.Count * 6;
+
+        int[] indices = new int[vertexCount];
+
+        Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
+        Color32[] colors = m_Mesh.colors32;
+
+        Color32 polyColor = new Color32(0, 255, 255, 255);
+
+        for (int i = 0; i < m_Polygons.Count; i++)
+        {
+
+            colors[i * 6 + 0] = polyColor;
+            colors[i * 6 + 1] = polyColor;
+            colors[i * 6 + 2] = polyColor;
+
+            colors[i * 6 + 3] = polyColor;
+            colors[i * 6 + 4] = polyColor;
+            colors[i * 6 + 5] = polyColor;
+        }
+
+        m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
+    }
+}
+
 public class PlanetFactory : MonoBehaviour
 {
 
@@ -42,21 +96,32 @@ public class PlanetFactory : MonoBehaviour
     public Material m_Material;
     public int m_Subdivide;
 
+    public Planet m_Planet;
+
     // Start is called before the first frame update
     void Start()
     {
-        InitAsIcosohedron();
-        //InitAsCube();
-        SubdivideTriangle(m_Subdivide);
-        //SubdivideSquare(m_Subdivide);
-        GenerateMeshTriangle();
-        //GenerateMeshSquare();
+        //InitAsIcosohedron();
+        //SubdivideTriangle(m_Subdivide);
+        //GenerateMeshTriangle();
+
+        InitAsCube();
+        SubdivideSquare(m_Subdivide);
+        GenerateMeshSquare();
+
+        m_Planet = new Planet(m_PlanetMesh, m_Polygons);
+        m_Planet.draw();
     }
 
     // Update is called once per frame
+    public int i = 0;
     void Update()
     {
-
+        if (i > 382) {
+            i = 0;
+        }
+        m_Planet.setColor(i++, new Color32(0,255,255,255));
+        m_Planet.setColor(i, new Color32(255, 0, 0, 255));
     }
 
     public void SubdivideTriangle(int recursions)
@@ -216,14 +281,14 @@ public class PlanetFactory : MonoBehaviour
         m_Polygons = new List<Polygon>();
         m_Vertices = new List<Vector3>();
 
-        m_Vertices.Add(new Vector3(-0.5f, -0.5f, -0.5f));
-        m_Vertices.Add(new Vector3(0.5f, -0.5f, -0.5f));
-        m_Vertices.Add(new Vector3(0.5f, 0.5f, -0.5f));
-        m_Vertices.Add(new Vector3(-0.5f, 0.5f, -0.5f));
-        m_Vertices.Add(new Vector3(-0.5f, -0.5f, 0.5f));
-        m_Vertices.Add(new Vector3(0.5f, -0.5f, 0.5f));
-        m_Vertices.Add(new Vector3(0.5f, 0.5f, 0.5f));
-        m_Vertices.Add(new Vector3(-0.5f, 0.5f, 0.5f));
+        m_Vertices.Add(new Vector3(-0.5f, -0.5f, -0.5f).normalized);
+        m_Vertices.Add(new Vector3(0.5f, -0.5f, -0.5f).normalized);
+        m_Vertices.Add(new Vector3(0.5f, 0.5f, -0.5f).normalized);
+        m_Vertices.Add(new Vector3(-0.5f, 0.5f, -0.5f).normalized);
+        m_Vertices.Add(new Vector3(-0.5f, -0.5f, 0.5f).normalized);
+        m_Vertices.Add(new Vector3(0.5f, -0.5f, 0.5f).normalized);
+        m_Vertices.Add(new Vector3(0.5f, 0.5f, 0.5f).normalized);
+        m_Vertices.Add(new Vector3(-0.5f, 0.5f, 0.5f).normalized);
 
 
         m_Polygons.Add(new Polygon(0, 1, 2, 3)); // front
@@ -233,6 +298,7 @@ public class PlanetFactory : MonoBehaviour
         m_Polygons.Add(new Polygon(5, 4, 7, 6)); // back
         m_Polygons.Add(new Polygon(4, 5, 1, 0)); // bottom
     }
+
     public void GenerateMeshTriangle()
     {
         // We'll store our planet's mesh in the m_PlanetMesh
@@ -278,7 +344,10 @@ public class PlanetFactory : MonoBehaviour
         terrainMesh.vertices = vertices;
         terrainMesh.normals = normals;
         terrainMesh.colors32 = colors;
-        terrainMesh.SetTriangles(indices, 0); MeshFilter terrainFilter = m_PlanetMesh.AddComponent<MeshFilter>();
+
+        terrainMesh.SetTriangles(indices, 0);
+
+        MeshFilter terrainFilter = m_PlanetMesh.AddComponent<MeshFilter>();
         terrainFilter.mesh = terrainMesh;
     }
 
