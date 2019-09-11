@@ -32,6 +32,8 @@ public class PlanetFactory : MonoBehaviour
             perlin.Seed = Random.Range(0, 999999);
             GameObject planet = GenerateMeshSquare(cube, perlin);
             planet.AddComponent<MeshCollider>();
+            planet.AddComponent<Planet>();
+            planet.GetComponent<Planet>().m_Polygons = cube.m_Polygons;
             return planet;
         }
         else if (type == 1)
@@ -43,6 +45,8 @@ public class PlanetFactory : MonoBehaviour
             perlin.Seed = Random.Range(0,999999);
             GameObject planet = GenerateMeshTriangle(icsosohedron);
             planet.AddComponent<SphereCollider>();
+            planet.AddComponent<Planet>();
+            planet.GetComponent<Planet>().m_Polygons = icsosohedron.m_Polygons;
             return planet;
         }
         else
@@ -294,6 +298,9 @@ public class PlanetFactory : MonoBehaviour
         {
             var poly = cube.m_Polygons[i];
 
+            cube.m_Polygons[i].indices.Add(i * 6);
+            cube.m_Polygons[i].indices.Add(i * 6 + 3);
+
             indices[i * 6 + 0] = i * 6 + 0;
             indices[i * 6 + 1] = i * 6 + 3;
             indices[i * 6 + 2] = i * 6 + 1;
@@ -326,7 +333,7 @@ public class PlanetFactory : MonoBehaviour
                 polyColor = grass;
             }
 
-                colors[i * 6 + 0] = polyColor;
+            colors[i * 6 + 0] = polyColor;
             colors[i * 6 + 1] = polyColor;
             colors[i * 6 + 2] = polyColor;
 
@@ -374,14 +381,17 @@ public class PlanetFactory : MonoBehaviour
 public class Polygon
 {
     public List<int> m_Vertices;
+    public List<int> indices;
 
     public Polygon(int a, int b, int c, int d)
     {
         m_Vertices = new List<int>() { a, b, c, d };
+        indices = new List<int>();
     }
 
     public Polygon(int a, int b, int c)
     {
         m_Vertices = new List<int>() { a, b, c };
+        indices = new List<int>();
     }
 }

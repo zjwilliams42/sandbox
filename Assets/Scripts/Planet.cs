@@ -30,48 +30,54 @@ public class Planet : MonoBehaviour
             MeshCollider meshCollider = hit.collider as MeshCollider;
             if (meshCollider != null && meshCollider.sharedMesh != null)
             {
-
                 Mesh mesh = meshCollider.sharedMesh;
-                Vector3[] normals = mesh.normals;
                 int[] triangles = mesh.triangles;
+                setColor(triangles[hit.triangleIndex * 3], new Color32(255,255,255,255));
 
-                // Extract local space normals of the triangle we hit
-                Vector3 n0 = normals[triangles[hit.triangleIndex * 3 + 0]];
-                Vector3 n1 = normals[triangles[hit.triangleIndex * 3 + 1]];
-                Vector3 n2 = normals[triangles[hit.triangleIndex * 3 + 2]];
+                //Mesh mesh = meshCollider.sharedMesh;
+                //Vector3[] normals = mesh.normals;
+                //int[] triangles = mesh.triangles;
 
-                // interpolate using the barycentric coordinate of the hitpoint
-                Vector3 baryCenter = hit.barycentricCoordinate;
+                //Color32[] colors = mesh.colors32;
 
-                // Use barycentric coordinate to interpolate normal
-                Vector3 interpolatedNormal = n0 * baryCenter.x + n1 * baryCenter.y + n2 * baryCenter.z;
-                // normalize the interpolated normal
-                interpolatedNormal = interpolatedNormal.normalized;
+                //colors[triangles[hit.triangleIndex * 3 + 0]] = new Color32(0, 0, 0, 255);
+                //colors[triangles[hit.triangleIndex * 3 + 1]] = new Color32(0, 0, 0, 255);
+                //colors[triangles[hit.triangleIndex * 3 + 2]] = new Color32(0, 0, 0, 255);
 
-                // Transform local space normals to world space
-                Transform hitTransform = hit.collider.transform;
-                interpolatedNormal = hitTransform.TransformDirection(interpolatedNormal);
-
-                // Display with Debug.DrawLine
-                Debug.DrawRay(hit.point, interpolatedNormal);
+                //mesh.colors32 = colors;
             }
         }
     }
 
+    private Polygon GetPolygon(int index)
+    {
+        foreach (Polygon poly in m_Polygons)
+        {
+            if (poly.indices.Contains(index))
+            {
+                return poly;
+            }
+        }
+        return null;
+    }
+
     public void setColor(int index, Color32 color)
     {
-        Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
-        Color32[] colors = m_Mesh.colors32;
+        Polygon poly = GetPolygon(index);
+        if (poly != null)
+        {
+            Mesh m_Mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
+            Color32[] colors = m_Mesh.colors32;
 
-        colors[index * 6 + 0] = color;
-        colors[index * 6 + 1] = color;
-        colors[index * 6 + 2] = color;
+            foreach (int ind in poly.indices)
+            {
+                colors[ind + 0] = color;
+                colors[ind + 1] = color;
+                colors[ind + 2] = color;
+            }
 
-        colors[index * 6 + 3] = color;
-        colors[index * 6 + 4] = color;
-        colors[index * 6 + 5] = color;
-
-        m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
+            m_PlanetMesh.GetComponent<MeshFilter>().mesh.colors32 = colors;
+        }
     }
 
     public void draw()

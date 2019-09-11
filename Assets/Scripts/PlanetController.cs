@@ -8,7 +8,6 @@ public class PlanetController : MonoBehaviour
     void Start()
     {
         GameObject planet = PlanetFactory.GeneratePlanet(new Material(Shader.Find("Particles/Standard Surface")), 5);
-        planet.AddComponent<Planet> ();
     }
 
     // Update is called once per frame
