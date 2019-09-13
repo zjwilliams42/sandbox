@@ -94,14 +94,36 @@ public class Planet : MonoBehaviour
             {
                 Mesh mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
                 Texture2D texture = new Texture2D(128, 128);
-                for (int x = 0; x < texture.width; x++)
-                {
-                    double stepX = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].x, mesh.vertices[poly.m_Vertices[3] * 3].x);
-                    double stepY = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].y, mesh.vertices[poly.m_Vertices[0] * 3].y);
 
-                    for (int y = 0; y < texture.height; y++)
+                Vector3 f = mesh.vertices[poly.m_Vertices[3] * 3] - mesh.vertices[poly.m_Vertices[2] * 3];
+                Vector3 g = mesh.vertices[poly.m_Vertices[3] * 3] - mesh.vertices[poly.m_Vertices[0] * 3];
+                Vector3 P = mesh.vertices[poly.m_Vertices[3] * 3];
+                Vector3 Q = mesh.vertices[poly.m_Vertices[0] * 3];
+                Vector3 R = mesh.vertices[poly.m_Vertices[2] * 3];
+                Vector3 p = new Vector3(0,0,0);
+
+                
+                float stepX = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].x, mesh.vertices[poly.m_Vertices[3] * 3].x);
+                float stepY = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].y, mesh.vertices[poly.m_Vertices[0] * 3].y);
+                float denom = (f.x * g.y) - (f.y * g.x);
+                float alpha = ((p.x * g.y) - (p.y * g.x)) / denom;
+                float beta = ((p.y * g.x) - (p.x * g.y)) / denom;
+
+                Vector3 stepVector = new Vector3(stepX, stepY, 0);
+                float stepAlpha = ((stepVector.x * g.y) - (stepVector.y * g.x)) / denom;
+                float stepBeta = ((stepVector.y * g.x) - (stepVector.x * g.y)) / denom;
+
+                float goalAlpha = ((R.x * g.y) - (R.y * g.x)) / denom;
+                float goalBeta = ((Q.x * g.y) - (Q.y * g.x)) / denom;
+
+                float currAlpha = alpha;
+                for (int y = 0; y < texture.width; y++)
+                {
+                    for (int x = 0; x < texture.height; x++)
                     {
-                        double value = Mathf.Abs((float)Perlin.GetValue(mesh.vertices[poly.m_Vertices[0] * 3].x + (stepX * x), mesh.vertices[poly.m_Vertices[0] * 3].y + (stepY * y), mesh.vertices[poly.m_Vertices[0] * 3].z));
+                        Vector3 P_prime= (currAlpha * f) + (beta * g) + P;
+
+                        double value = Mathf.Abs((float)Perlin.GetValue(P_prime.x, P_prime.y, P_prime.z));
                         Color32 polyColor = p_TerrainType[p_TerrainType.Count - 1];
                         for (int range = 0; range < p_TerrainHeight.Count; range++)
                         {
@@ -112,9 +134,11 @@ public class Planet : MonoBehaviour
                             }
                         }
 
-                        //texture.SetPixel(x, y, s_Color32);
                         texture.SetPixel(x, y, polyColor);
+                        currAlpha += stepAlpha;
                     }
+                    beta += stepBeta;
+                    currAlpha = alpha;
                 }
                 s_Display.GetComponent<Renderer>().material.mainTexture = texture;
                 texture.Apply();
@@ -136,7 +160,7 @@ public class Planet : MonoBehaviour
         return null;
     }
 
-    private double FindStep(float x1, float x2)
+    private float FindStep(float x1, float x2)
     {
         float smallerX = Mathf.Min(x1, x2);
         float greaterX = Mathf.Max(x1, x2);
