@@ -12,10 +12,10 @@ public class Planet : MonoBehaviour
     public List<Color32> p_TerrainType;
 
     public float p_Rotation;
-    public float axis;
+    public float p_axis;
 
     private Polygon s_Polygon;
-    private Color32 s_Color32;
+    private List<Color32> s_Color32;
     public GameObject s_Display;
     public int s_MapResolution;
 
@@ -23,13 +23,19 @@ public class Planet : MonoBehaviour
     #endregion
 
     #region Constructors
-    public void Start()
+    public void Awake()
     {
         m_PlanetMesh = this.gameObject;
-        p_Rotation = 0f;
-        axis = -10f;
-        m_PlanetMesh.transform.rotation = Quaternion.Euler(0, 0, axis);
-        s_MapResolution = 10;
+        p_Rotation = 10f;
+        s_MapResolution = 256;
+    }
+
+    public void SetAxis(float axis)
+    {
+        Debug.Log("Axis: " + axis);
+        p_axis = axis;
+        if (m_PlanetMesh.transform == null) Debug.Log("[*] No transform.");
+        m_PlanetMesh.transform.rotation = Quaternion.Euler(0, 0, p_axis);
     }
     #endregion
 
@@ -40,7 +46,7 @@ public class Planet : MonoBehaviour
         #endregion
 
         #region Area Selection
-        if (Input.GetMouseButtonDown(0) || true)
+        if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
@@ -68,17 +74,21 @@ public class Planet : MonoBehaviour
 
             if (s_Polygon != null)
             {
+                int j = 0;
                 foreach (int ind in s_Polygon.indices)
                 {
-                    colors[ind + 0] = s_Color32;
-                    colors[ind + 1] = s_Color32;
-                    colors[ind + 2] = s_Color32;
+                    colors[ind + 0] = s_Color32[j++];
+                    colors[ind + 1] = s_Color32[j++];
+                    colors[ind + 2] = s_Color32[j++];
                 }
             }
 
+            s_Color32 = new List<Color32>();
             foreach (int ind in poly.indices)
             {
-                s_Color32 = colors[ind];
+                s_Color32.Add(colors[ind + 0]);
+                s_Color32.Add(colors[ind + 1]);
+                s_Color32.Add(colors[ind + 2]);
                 colors[ind + 0] = color;
                 colors[ind + 1] = color;
                 colors[ind + 2] = color;

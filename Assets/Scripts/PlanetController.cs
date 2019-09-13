@@ -9,7 +9,8 @@ public class PlanetController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameObject planet = PlanetFactory.GeneratePlanet(new Material(Shader.Find("Particles/Standard Surface")), 5, 0);
+        int seed = Random.Range(-2147483647, 2147483647);
+        GameObject planet = PlanetFactory.GeneratePlanet(seed);
         planet.GetComponent<Planet>().s_Display = area_Display;
     }
 

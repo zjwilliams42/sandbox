@@ -29,9 +29,24 @@ public class PlanetFactory : MonoBehaviour
      * @param "subdivide" this is how many time we subdivide the original shape.
      * @param "type" decided the original shape we are subdividing, default is 0. (0 = cube, 1, = icosohedron)
      */
-    static public GameObject GeneratePlanet(Material material, int subdivide, int type = 0)
+    static public GameObject GeneratePlanet(int seed, int type = 0)
     {
+        #region Generate Random/Noise Based on Seed
         LibNoise.Generator.Perlin perlin = new LibNoise.Generator.Perlin();
+        Random.InitState(seed);
+        perlin.Seed = seed;
+        #endregion
+
+        // TODO I want this to be able to generate a subdivide 6 planet, but it can't.
+        #region Generate Subdivide
+        float subdivide_seed = Random.value;
+        int subdivide = 5;
+        if (subdivide <= 0.3) { subdivide = 4; }
+        else if (subdivide <= 0.8) { subdivide = 5; }
+        Debug.Log("subdivide: " + subdivide);
+        #endregion
+
+        #region Initialize Primitive
         Primitive primitive = null;
         if (type == 0)
         {
@@ -46,8 +61,17 @@ public class PlanetFactory : MonoBehaviour
         }
         else
         { return null; }
+        #endregion
 
+        #region Create GameObject
         GameObject planet = CreateGameObject(primitive, perlin);
+        #endregion
+
+        #region Generate Axis Tilt
+        int sign = (Random.value >= 0.5) ? 1 : -1;
+        planet.GetComponent<Planet>().SetAxis(sign * Random.value * 10);
+        #endregion
+
         return planet;
     }
     #endregion
@@ -211,6 +235,7 @@ public class PlanetFactory : MonoBehaviour
     }
     #endregion
 
+    #region Create Mesh
     private static GameObject CreateGameObject(Primitive primitive, LibNoise.Generator.Perlin perlin)
     {
         #region Create Planet Object
@@ -294,9 +319,13 @@ public class PlanetFactory : MonoBehaviour
             }
             #endregion
 
-            
-            #region Get Polgon Color
-            double value = Mathf.Abs((float)perlin.GetValue(vertices[index].x, vertices[index].y, vertices[index].z));
+            #region Get Polgon Color (Legacy)
+            /*
+            double value0 = Mathf.Abs((float)perlin.GetValue(vertices[index].x, vertices[index].y, vertices[index].z));
+            double value1 = Mathf.Abs((float)perlin.GetValue(vertices[index + 1].x, vertices[index + 1].y, vertices[index + 1].z));
+            double value2 = Mathf.Abs((float)perlin.GetValue(vertices[index + 2].x, vertices[index + 2].y, vertices[index + 2].z));
+            double value3 = Mathf.Abs((float)perlin.GetValue(vertices[index + 3].x, vertices[index + 3].y, vertices[index + 3].z));
+            double value = (value1 + value2 + value3 + value0) / 4;
             Color32 polyColor = p_TerrainType[p_TerrainType.Count - 1];
             for (int range = 0; range < p_TerrainHeight.Count; range++)
             {
@@ -306,9 +335,11 @@ public class PlanetFactory : MonoBehaviour
                     break;
                 }
             }
+            */
             #endregion
 
-            #region Set Colors
+            #region Set Colors (Legacy)
+            /*
             colors[index] = polyColor;
             colors[index + 1] = polyColor;
             colors[index + 2] = polyColor;
@@ -319,8 +350,26 @@ public class PlanetFactory : MonoBehaviour
                 colors[index + 4] = polyColor;
                 colors[index + 5] = polyColor;
             }
+            */
             #endregion
-       
+
+            #region Set Color
+            int j_max = (primitive.m_Polygons[i].type == 0) ? 6 : 4;
+            for (int j = 0; j < j_max; j++)
+            {
+                double value = Mathf.Abs((float)perlin.GetValue(vertices[index + j].x, vertices[index + j].y, vertices[index + j].z));
+                colors[index + j] = p_TerrainType[p_TerrainType.Count - 1];
+                for (int range = 0; range < p_TerrainHeight.Count; range++)
+                {
+                    if (value <= p_TerrainHeight[range])
+                    {
+                        colors[index + j] = p_TerrainType[range];
+                        break;
+                    }
+                }
+            }
+            #endregion
+
         }
         #endregion
 
@@ -346,6 +395,15 @@ public class PlanetFactory : MonoBehaviour
         p_TerrainType.Add(SAND);
         p_TerrainType.Add(GRASS);
     }
+    #endregion
+
+    #region Generate Planet Data
+    private static float getAxis(LibNoise.Generator.Perlin perlin)
+    {
+        return (float) perlin.GetValue(0, 0, 1) * 10;
+    }
+    #endregion
+
     #endregion
 
     #region Utility Classes
