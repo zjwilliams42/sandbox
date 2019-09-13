@@ -26,7 +26,7 @@ public class Planet : MonoBehaviour
     public void Start()
     {
         m_PlanetMesh = this.gameObject;
-        p_Rotation = 10f;
+        p_Rotation = 0f;
         axis = -10f;
         m_PlanetMesh.transform.rotation = Quaternion.Euler(0, 0, axis);
         s_MapResolution = 10;
@@ -40,7 +40,7 @@ public class Planet : MonoBehaviour
         #endregion
 
         #region Area Selection
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || true)
         {
             RaycastHit hit;
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
@@ -93,18 +93,19 @@ public class Planet : MonoBehaviour
             if (s_Display != null)
             {
                 Mesh mesh = m_PlanetMesh.GetComponent<MeshFilter>().mesh;
-                Texture2D texture = new Texture2D(128, 128);
+                Texture2D texture = new Texture2D(s_MapResolution, s_MapResolution);
 
-                Vector3 f = mesh.vertices[poly.m_Vertices[3] * 3] - mesh.vertices[poly.m_Vertices[2] * 3];
-                Vector3 g = mesh.vertices[poly.m_Vertices[3] * 3] - mesh.vertices[poly.m_Vertices[0] * 3];
-                Vector3 P = mesh.vertices[poly.m_Vertices[3] * 3];
-                Vector3 Q = mesh.vertices[poly.m_Vertices[0] * 3];
-                Vector3 R = mesh.vertices[poly.m_Vertices[2] * 3];
-                Vector3 p = new Vector3(0,0,0);
+                Vector3 f = mesh.vertices[poly.t_Vertices[3]] - mesh.vertices[poly.t_Vertices[2]];
+                Vector3 g = mesh.vertices[poly.t_Vertices[3]] - mesh.vertices[poly.t_Vertices[0]];
+                Vector3 P = mesh.vertices[poly.t_Vertices[3]];
+                Vector3 Q = mesh.vertices[poly.t_Vertices[0]];
+                Vector3 R = mesh.vertices[poly.t_Vertices[2]];
+                Vector3 p = new Vector3(0, 0, 0);
 
-                
-                float stepX = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].x, mesh.vertices[poly.m_Vertices[3] * 3].x);
-                float stepY = FindStep(mesh.vertices[poly.m_Vertices[2] * 3].y, mesh.vertices[poly.m_Vertices[0] * 3].y);
+
+                float stepX = FindStep(mesh.vertices[poly.t_Vertices[3]].x, mesh.vertices[poly.t_Vertices[2]].x);
+                float stepY = FindStep(mesh.vertices[poly.t_Vertices[3]].y, mesh.vertices[poly.t_Vertices[0]].y);
+
                 float denom = (f.x * g.y) - (f.y * g.x);
                 float alpha = ((p.x * g.y) - (p.y * g.x)) / denom;
                 float beta = ((p.y * g.x) - (p.x * g.y)) / denom;
@@ -121,8 +122,8 @@ public class Planet : MonoBehaviour
                 {
                     for (int x = 0; x < texture.height; x++)
                     {
-                        Vector3 P_prime= (currAlpha * f) + (beta * g) + P;
-
+                        Vector3 P_prime = (currAlpha * f) + (beta * g) + P;
+                        
                         double value = Mathf.Abs((float)Perlin.GetValue(P_prime.x, P_prime.y, P_prime.z));
                         Color32 polyColor = p_TerrainType[p_TerrainType.Count - 1];
                         for (int range = 0; range < p_TerrainHeight.Count; range++)

@@ -252,34 +252,49 @@ public class PlanetFactory : MonoBehaviour
                 index = index * 6;
                 primitive.m_Polygons[i].indices.Add(index);
                 primitive.m_Polygons[i].indices.Add(index + 3);
+
+                primitive.m_Polygons[i].t_Vertices.Add(index + 0);
+                primitive.m_Polygons[i].t_Vertices.Add(index + 2);
+                primitive.m_Polygons[i].t_Vertices.Add(index + 1);
+                primitive.m_Polygons[i].t_Vertices.Add(index + 4);
             }
             else
             {
                 index = index * 3;
                 primitive.m_Polygons[i].indices.Add(index);
+
+                primitive.m_Polygons[i].t_Vertices.Add(index + 0);
+                primitive.m_Polygons[i].t_Vertices.Add(index + 2);
+                primitive.m_Polygons[i].t_Vertices.Add(index + 1);
             }
             #endregion
 
             #region Set Mesh Indices
             indices[index + 0] = index + 0;
-            indices[index + 1] = index + 2;
-            indices[index + 2] = index + 1;
+            indices[index + 1] = index + 1;
+            indices[index + 2] = index + 2;
 
             if (poly.type == 0)
             {
-                indices[index + 3] = index + 0;
-                indices[index + 4] = index + 3;
-                indices[index + 5] = index + 2;
+                indices[index + 3] = index + 3;
+                indices[index + 4] = index + 4;
+                indices[index + 5] = index + 5;
             }
             #endregion
 
             #region Set Mesh Vertices
             vertices[index + 0] = primitive.m_Vertices[poly.m_Vertices[0]];
-            vertices[index + 1] = primitive.m_Vertices[poly.m_Vertices[1]];
-            vertices[index + 2] = primitive.m_Vertices[poly.m_Vertices[2]];
-            if (poly.type == 0) { vertices[index + 3] = primitive.m_Vertices[poly.m_Vertices[3]]; }
+            vertices[index + 1] = primitive.m_Vertices[poly.m_Vertices[2]];
+            vertices[index + 2] = primitive.m_Vertices[poly.m_Vertices[1]];
+            if (poly.type == 0)
+            {
+                vertices[index + 3] = primitive.m_Vertices[poly.m_Vertices[0]];
+                vertices[index + 4] = primitive.m_Vertices[poly.m_Vertices[3]];
+                vertices[index + 5] = primitive.m_Vertices[poly.m_Vertices[2]];
+            }
             #endregion
 
+            
             #region Get Polgon Color
             double value = Mathf.Abs((float)perlin.GetValue(vertices[index].x, vertices[index].y, vertices[index].z));
             Color32 polyColor = p_TerrainType[p_TerrainType.Count - 1];
@@ -305,6 +320,7 @@ public class PlanetFactory : MonoBehaviour
                 colors[index + 5] = polyColor;
             }
             #endregion
+       
         }
         #endregion
 
@@ -361,12 +377,14 @@ public class Polygon
 {
     public List<int> m_Vertices;
     public List<int> indices;
+    public List<int> t_Vertices;
     public int type;
 
     public Polygon(int a, int b, int c, int d)
     {
         m_Vertices = new List<int>() { a, b, c, d };
         indices = new List<int>();
+        t_Vertices = new List<int>();
         type = 0;
     }
 
